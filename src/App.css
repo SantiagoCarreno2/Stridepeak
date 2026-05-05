@@ -59,10 +59,21 @@ body {
   font-weight: 900;
   color: #fff;
   letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .logo-acento {
   color: #e53e3e;
+}
+
+/* Imagen SP dentro del botón logo */
+.navbar-logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .navbar-links {

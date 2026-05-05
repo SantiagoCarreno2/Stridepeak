@@ -564,6 +564,7 @@ function App() {
 
       <nav className="navbar">
         <button onClick={() => navegar('inicio')} className="navbar-logo">
+          <img src="/images/logo.png" alt="SP" className="navbar-logo-img" />
           STRIDE<span className="logo-acento">PEAK</span>
         </button>
 
