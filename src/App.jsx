@@ -5,11 +5,14 @@ import productosData from './data/productos'
 // ============================================================
 // COMPONENTE: TarjetaProducto
 // ============================================================
-function TarjetaProducto({ producto, onAgregar }) {
+function TarjetaProducto({ producto, onAgregar, comparador, onComparar }) {
 
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null)
   const [agregado, setAgregado] = useState(false)
   const [imgError, setImgError] = useState(false)
+
+  // true si este producto ya está en el comparador
+  const enComparador = comparador.some(p => p.id === producto.id)
 
   const handleAgregar = () => {
     if (!tallaSeleccionada) {
@@ -64,6 +67,14 @@ function TarjetaProducto({ producto, onAgregar }) {
         >
           {agregado ? 'AGREGADO' : 'AGREGAR AL CARRITO'}
         </button>
+
+        {/* Botón comparar: cambia de texto según el estado del comparador */}
+        <button
+          onClick={() => onComparar(producto)}
+          className={`btn-comparar ${enComparador ? 'en-comparador' : ''}`}
+        >
+          {enComparador ? 'QUITAR' : 'COMPARAR'}
+        </button>
       </div>
     </div>
   )
@@ -74,7 +85,7 @@ function TarjetaProducto({ producto, onAgregar }) {
 // REQUISITO 9 — filtros por categoría (select) y rango de precio (select)
 // Usa import directo del archivo local — sin fetch al backend
 // ============================================================
-function Catalogo({ onAgregar }) {
+function Catalogo({ onAgregar, comparador, onComparar }) {
 
   const [busqueda, setBusqueda]   = useState('')
   const [categoria, setCategoria] = useState('todas')
@@ -143,7 +154,13 @@ function Catalogo({ onAgregar }) {
       {/* REQUISITO 7 — key en lista */}
       <div className="grid-productos">
         {productosFiltrados.map(p => (
-          <TarjetaProducto key={p.id} producto={p} onAgregar={onAgregar} />
+          <TarjetaProducto
+              key={p.id}
+              producto={p}
+              onAgregar={onAgregar}
+              comparador={comparador}
+              onComparar={onComparar}
+            />
         ))}
       </div>
     </section>
@@ -393,6 +410,68 @@ function Nosotros() {
 }
 
 // ============================================================
+// COMPONENTE: Comparador
+// Panel fijo en la parte inferior que compara 2 productos
+// Solo se renderiza cuando hay exactamente 2 productos seleccionados
+// ============================================================
+function Comparador({ comparador, onCerrar }) {
+  if (comparador.length < 2) return null
+
+  const [a, b] = comparador
+
+  const filas = [
+    {
+      label: 'IMAGEN',
+      render: p => (
+        <img
+          src={p.imagen}
+          alt={p.nombre}
+          className="comp-img"
+          onError={e => { e.target.style.display = 'none' }}
+        />
+      ),
+    },
+    { label: 'NOMBRE',    render: p => p.nombre },
+    { label: 'MARCA',     render: p => <span className="comp-marca">{p.marca}</span> },
+    { label: 'PRECIO',    render: p => `$${p.precio.toLocaleString('es-CO')} COP` },
+    { label: 'CATEGORÍA', render: p => p.categoria },
+    { label: 'TALLAS',    render: p => p.tallas.join(' · ') },
+  ]
+
+  return (
+    <div className="comparador-panel">
+      <div className="comparador-header">
+        <span className="comparador-titulo">COMPARADOR</span>
+        <button onClick={onCerrar} className="comparador-cerrar">✕ CERRAR</button>
+      </div>
+
+      <div className="comparador-tabla">
+        {/* Columna de etiquetas */}
+        <div className="comp-col comp-col-labels">
+          {filas.map(f => (
+            <div key={f.label} className="comp-celda comp-label">{f.label}</div>
+          ))}
+        </div>
+
+        {/* Columna producto A */}
+        <div className="comp-col">
+          {filas.map(f => (
+            <div key={f.label} className="comp-celda">{f.render(a)}</div>
+          ))}
+        </div>
+
+        {/* Columna producto B */}
+        <div className="comp-col">
+          {filas.map(f => (
+            <div key={f.label} className="comp-celda">{f.render(b)}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
 // COMPONENTE PRINCIPAL: App
 // NUEVO: localStorage para carrito + modo oscuro con toggle
 // ============================================================
@@ -402,6 +481,15 @@ function App() {
   const [carrito, setCarrito] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('carrito')) || []
+    } catch {
+      return []
+    }
+  })
+
+  // Comparador: array de máximo 2 productos, persistido en localStorage
+  const [comparador, setComparador] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('comparador')) || []
     } catch {
       return []
     }
@@ -422,6 +510,11 @@ function App() {
     localStorage.setItem('carrito', JSON.stringify(carrito))
   }, [carrito])
 
+  // Sincroniza comparador → localStorage
+  useEffect(() => {
+    localStorage.setItem('comparador', JSON.stringify(comparador))
+  }, [comparador])
+
   // REQUISITO 12 — sincroniza modo oscuro → localStorage y clase en body
   useEffect(() => {
     localStorage.setItem('modoOscuro', String(modoOscuro))
@@ -436,6 +529,20 @@ function App() {
   const eliminarDelCarrito = index => {
     setCarrito(prev => prev.filter((_, i) => i !== index))
   }
+
+  // Agrega o quita un producto del comparador (máximo 2)
+  const toggleComparador = producto => {
+    const yaEsta = comparador.some(p => p.id === producto.id)
+    if (yaEsta) {
+      setComparador(prev => prev.filter(p => p.id !== producto.id))
+    } else if (comparador.length >= 2) {
+      alert('Ya tienes 2 productos para comparar. Cierra el comparador o quita uno.')
+    } else {
+      setComparador(prev => [...prev, producto])
+    }
+  }
+
+  const cerrarComparador = () => setComparador([])
 
   // REQUISITO 10 — reordenar para DnD: mueve el item de indexOrigen a indexDestino
   const reordenarCarrito = (indexOrigen, indexDestino) => {
@@ -529,7 +636,11 @@ function App() {
         )}
 
         {paginaActiva === 'catalogo' && (
-          <Catalogo onAgregar={agregarAlCarrito} />
+          <Catalogo
+            onAgregar={agregarAlCarrito}
+            comparador={comparador}
+            onComparar={toggleComparador}
+          />
         )}
 
         {/* REQUISITO 2 — props: carrito, onEliminar, onReordenar */}
@@ -545,6 +656,9 @@ function App() {
         {paginaActiva === 'nosotros' && <Nosotros />}
 
       </main>
+
+      {/* Panel comparador: aparece automáticamente al seleccionar 2 productos */}
+      <Comparador comparador={comparador} onCerrar={cerrarComparador} />
 
       <footer className="footer">
         <span className="footer-logo">STRIDEPEAK</span>
