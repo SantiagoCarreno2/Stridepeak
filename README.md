@@ -4,6 +4,7 @@ Tienda de sneakers desarrollada en React + Vite. Proyecto académico que demuest
 
 **Repositorio:** https://github.com/SantiagoCarreno2/Stridepeak  
 **Hosting:** Vercel  
+**Hosting:** https://stridepeak-3p79.vercel.app/
 **Archivo principal:** `src/App.jsx`
 
 ---
