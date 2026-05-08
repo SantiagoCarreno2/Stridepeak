@@ -682,6 +682,141 @@ useEffect(() => {
 
 ---
 
+## Requisito 14 — Conversor de moneda con API externa (Open Exchange Rates)
+
+### Qué es
+El conversor de moneda conecta la app a la API pública de **Open Exchange Rates** para obtener tasas de cambio en tiempo real. El usuario puede elegir entre COP, USD y EUR desde un selector en el catálogo; todos los precios se recalculan automáticamente usando las tasas descargadas. La moneda seleccionada se guarda en `localStorage` para persistir entre sesiones.
+
+### Dónde está
+
+| Elemento | Archivo | Línea aprox. |
+|---------|---------|-------------|
+| Función `formatearPrecio` (conversión + símbolo) | `src/App.jsx` | 9–16 |
+| Estado `moneda` (inicializado desde localStorage) | `src/App.jsx` | `App` — estado |
+| Estado `tasas` (tasas de cambio de la API) | `src/App.jsx` | `App` — estado |
+| `useEffect` que hace `fetch` a la API | `src/App.jsx` | `App` — efectos |
+| `useEffect` que guarda `moneda` en localStorage | `src/App.jsx` | `App` — efectos |
+| Selector `<select>` de moneda en el catálogo | `src/App.jsx` | `Catalogo` — filtros |
+| Precios convertidos en tarjetas de producto | `src/App.jsx` | `TarjetaProducto` |
+| Precios convertidos en el carrito | `src/App.jsx` | `Carrito` |
+| Precios convertidos en el comparador | `src/App.jsx` | `Comparador` |
+| Estilos del selector de moneda | `src/App.css` | `.filtro-moneda-wrap` |
+
+### Endpoint de la API
+
+```
+GET https://openexchangerates.org/api/latest.json?app_id=<API_KEY>
+```
+
+La respuesta contiene un objeto `rates` con todas las tasas relativas al dólar (USD = 1):
+
+```json
+{
+  "base": "USD",
+  "rates": {
+    "COP": 4100.5,
+    "EUR": 0.92,
+    "USD": 1
+  }
+}
+```
+
+### Fórmula de conversión
+
+Los precios originales en `productos.js` están en **COP**. Para convertir a otra moneda:
+
+```
+precioDolar   = precioCOP / rates.COP
+precioDestino = precioDolar * rates[monedaDestino]
+```
+
+### Fragmento de código
+
+**`src/App.jsx` — función `formatearPrecio` (conversión y símbolo)**
+```jsx
+function formatearPrecio(precioCOP, moneda, tasas) {
+  // Sin tasas o moneda COP → muestra el precio original
+  if (!tasas || moneda === 'COP') {
+    return `$${precioCOP.toLocaleString('es-CO')} COP`
+  }
+  // COP → USD → moneda destino
+  const valor = (precioCOP / tasas.COP) * tasas[moneda]
+  if (moneda === 'EUR') return `€${valor.toFixed(2)} EUR`  // símbolo €
+  return `$${valor.toFixed(2)} USD`                        // símbolo $
+}
+```
+
+**`src/App.jsx` — estado y fetch en el componente `App`**
+```jsx
+// Moneda seleccionada — se inicializa desde localStorage
+const [moneda, setMoneda] = useState(() => {
+  return localStorage.getItem('moneda') || 'COP'
+})
+
+// Tasas de cambio descargadas de la API (null mientras carga)
+const [tasas, setTasas] = useState(null)
+
+// Se ejecuta una sola vez al montar → descarga las tasas de cambio
+useEffect(() => {
+  fetch('https://openexchangerates.org/api/latest.json?app_id=...')
+    .then(r => r.json())
+    .then(data => setTasas(data.rates))
+    .catch(() => {})  // ante un error de red se queda en COP
+}, [])
+
+// Persiste la moneda elegida cada vez que cambia
+useEffect(() => {
+  localStorage.setItem('moneda', moneda)
+}, [moneda])
+```
+
+**`src/App.jsx` — selector de moneda en `Catalogo`**
+```jsx
+<div className="filtro-moneda-wrap">
+  <select
+    value={moneda}
+    onChange={e => setMoneda(e.target.value)}
+    className="filtro-select filtro-moneda"
+  >
+    <option value="COP">$ COP</option>
+    <option value="USD">$ USD</option>
+    <option value="EUR">€ EUR</option>
+  </select>
+  {/* Aviso mientras las tasas no han llegado */}
+  {!tasas && <span className="moneda-cargando">cargando tasas…</span>}
+</div>
+```
+
+### Flujo completo
+
+```
+Usuario abre el catálogo
+       ↓
+App monta → useEffect dispara fetch a Open Exchange Rates
+       ↓
+API responde con { rates: { COP, USD, EUR, ... } }
+       ↓
+setTasas(data.rates) → estado tasas disponible
+       ↓
+Usuario elige USD en el selector
+       ↓
+setMoneda('USD') → se guarda en localStorage
+       ↓
+formatearPrecio() recalcula todos los precios con la fórmula
+       ↓
+Tarjetas, carrito y comparador muestran precios en USD
+```
+
+### Símbolos por moneda
+
+| Moneda | Símbolo | Ejemplo |
+|--------|---------|---------|
+| COP | `$` | `$420.000 COP` |
+| USD | `$` | `$102.42 USD` |
+| EUR | `€` | `€94.87 EUR` |
+
+---
+
 ## Tecnologías utilizadas
 
 | Tecnología | Versión | Para qué |
@@ -690,7 +825,8 @@ useEffect(() => {
 | Vite | 6 | Bundler y servidor de desarrollo rápido |
 | CSS puro | — | Todos los estilos (sin frameworks) |
 | HTML5 Drag & Drop API | nativa | Reordenar items del carrito |
-| localStorage API | nativa | Persistencia del carrito, comparador y tema |
+| localStorage API | nativa | Persistencia del carrito, comparador, tema y moneda |
+| Open Exchange Rates API | — | Tasas de cambio en tiempo real (COP, USD, EUR) |
 | Node.js + Express | — | Backend con API REST (desarrollo local) |
 | Vercel | — | Hosting del frontend en producción |
 | GitHub | — | Control de versiones y CI/CD con Vercel |
