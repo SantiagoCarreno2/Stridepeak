@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import './App.css'
 import productosData from './data/productos'
+import LoadingScreen from './LoadingScreen'
+import './App.css'
 
 // ============================================================
 // COMPONENTE: TarjetaProducto
@@ -11,7 +12,6 @@ function TarjetaProducto({ producto, onAgregar, comparador, onComparar }) {
   const [agregado, setAgregado] = useState(false)
   const [imgError, setImgError] = useState(false)
 
-  // true si este producto ya está en el comparador
   const enComparador = comparador.some(p => p.id === producto.id)
 
   const handleAgregar = () => {
@@ -68,7 +68,6 @@ function TarjetaProducto({ producto, onAgregar, comparador, onComparar }) {
           {agregado ? 'AGREGADO' : 'AGREGAR AL CARRITO'}
         </button>
 
-        {/* Botón comparar: cambia de texto según el estado del comparador */}
         <button
           onClick={() => onComparar(producto)}
           className={`btn-comparar ${enComparador ? 'en-comparador' : ''}`}
@@ -82,8 +81,6 @@ function TarjetaProducto({ producto, onAgregar, comparador, onComparar }) {
 
 // ============================================================
 // COMPONENTE: Catalogo
-// REQUISITO 9 — filtros por categoría (select) y rango de precio (select)
-// Usa import directo del archivo local — sin fetch al backend
 // ============================================================
 function Catalogo({ onAgregar, comparador, onComparar }) {
 
@@ -91,10 +88,8 @@ function Catalogo({ onAgregar, comparador, onComparar }) {
   const [categoria, setCategoria] = useState('todas')
   const [rango, setRango]         = useState('todos')
 
-  // Categorías derivadas del array importado localmente
   const categorias = ['todas', ...new Set(productosData.map(p => p.categoria))]
 
-  // REQUISITO 9 — filtrado encadenado: texto + categoría + precio
   const productosFiltrados = productosData
     .filter(p => {
       const texto = `${p.nombre} ${p.marca} ${p.categoria}`.toLowerCase()
@@ -121,7 +116,6 @@ function Catalogo({ onAgregar, comparador, onComparar }) {
         className="buscador"
       />
 
-      {/* REQUISITO 1 & 9 — dos selects que filtran en tiempo real */}
       <div className="filtros">
         <select
           value={categoria}
@@ -151,16 +145,15 @@ function Catalogo({ onAgregar, comparador, onComparar }) {
         {`${productosFiltrados.length} productos encontrados`}
       </p>
 
-      {/* REQUISITO 7 — key en lista */}
       <div className="grid-productos">
         {productosFiltrados.map(p => (
           <TarjetaProducto
-              key={p.id}
-              producto={p}
-              onAgregar={onAgregar}
-              comparador={comparador}
-              onComparar={onComparar}
-            />
+            key={p.id}
+            producto={p}
+            onAgregar={onAgregar}
+            comparador={comparador}
+            onComparar={onComparar}
+          />
         ))}
       </div>
     </section>
@@ -169,14 +162,10 @@ function Catalogo({ onAgregar, comparador, onComparar }) {
 
 // ============================================================
 // COMPONENTE: Carrito
-// NUEVO: Drag & Drop nativo (HTML5) para reordenar items
-// Props: carrito, onEliminar, onReordenar (lifting state up)
 // ============================================================
 function Carrito({ carrito, onEliminar, onReordenar }) {
 
-  // REQUISITO 10 — DnD: ref para el índice origen del drag
   const dragIndex = useRef(null)
-  // Estado local para resaltar la fila destino visualmente
   const [dragOver, setDragOver] = useState(null)
 
   const total = carrito.reduce((suma, item) => suma + item.precio, 0)
@@ -187,7 +176,7 @@ function Carrito({ carrito, onEliminar, onReordenar }) {
   }
 
   const handleDragOver = (e, index) => {
-    e.preventDefault()                   // necesario para que onDrop funcione
+    e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     if (dragOver !== index) setDragOver(index)
   }
@@ -216,7 +205,6 @@ function Carrito({ carrito, onEliminar, onReordenar }) {
         <>
           <p className="carrito-hint">Arrastra los items para reordenarlos.</p>
 
-          {/* REQUISITO 7 — key en lista | REQUISITO 10 — atributos DnD */}
           {carrito.map((item, index) => (
             <div
               key={index}
@@ -228,10 +216,8 @@ function Carrito({ carrito, onEliminar, onReordenar }) {
               onDragEnd={handleDragEnd}
               onDragLeave={() => setDragOver(null)}
             >
-              {/* Asa de arrastre */}
               <span className="drag-handle" title="Arrastra para reordenar">⠿</span>
 
-              {/* REQUISITO 8 — imágenes */}
               <img
                 src={item.imagen}
                 alt={item.nombre}
@@ -288,7 +274,6 @@ function Contacto() {
     return nuevosErrores
   }
 
-  // Validación 100% local — sin fetch al backend
   const handleSubmit = e => {
     e.preventDefault()
     const erroresEncontrados = validar()
@@ -411,8 +396,6 @@ function Nosotros() {
 
 // ============================================================
 // COMPONENTE: Comparador
-// Panel fijo en la parte inferior que compara 2 productos
-// Solo se renderiza cuando hay exactamente 2 productos seleccionados
 // ============================================================
 function Comparador({ comparador, onCerrar }) {
   if (comparador.length < 2) return null
@@ -446,21 +429,16 @@ function Comparador({ comparador, onCerrar }) {
       </div>
 
       <div className="comparador-tabla">
-        {/* Columna de etiquetas */}
         <div className="comp-col comp-col-labels">
           {filas.map(f => (
             <div key={f.label} className="comp-celda comp-label">{f.label}</div>
           ))}
         </div>
-
-        {/* Columna producto A */}
         <div className="comp-col">
           {filas.map(f => (
             <div key={f.label} className="comp-celda">{f.render(a)}</div>
           ))}
         </div>
-
-        {/* Columna producto B */}
         <div className="comp-col">
           {filas.map(f => (
             <div key={f.label} className="comp-celda">{f.render(b)}</div>
@@ -473,64 +451,47 @@ function Comparador({ comparador, onCerrar }) {
 
 // ============================================================
 // COMPONENTE PRINCIPAL: App
-// NUEVO: localStorage para carrito + modo oscuro con toggle
 // ============================================================
 function App() {
 
-  // REQUISITO 11 — carrito inicializado desde localStorage
+  // ← LOADING SCREEN: se muestra al inicio y desaparece sola
+  const [cargando, setCargando] = useState(true)
+
   const [carrito, setCarrito] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('carrito')) || []
-    } catch {
-      return []
-    }
+    try { return JSON.parse(localStorage.getItem('carrito')) || [] }
+    catch { return [] }
   })
 
-  // Comparador: array de máximo 2 productos, persistido en localStorage
   const [comparador, setComparador] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('comparador')) || []
-    } catch {
-      return []
-    }
+    try { return JSON.parse(localStorage.getItem('comparador')) || [] }
+    catch { return [] }
   })
 
   const [paginaActiva, setPaginaActiva] = useState('inicio')
 
-  // REQUISITO 12 — modo oscuro: inicializado desde localStorage
-  // Se aplica la clase al body de inmediato para evitar parpadeo al recargar
   const [modoOscuro, setModoOscuro] = useState(() => {
     const guardado = localStorage.getItem('modoOscuro') === 'true'
     if (guardado) document.body.classList.add('oscuro')
     return guardado
   })
 
-  // REQUISITO 11 — sincroniza carrito → localStorage en cada cambio
   useEffect(() => {
     localStorage.setItem('carrito', JSON.stringify(carrito))
   }, [carrito])
 
-  // Sincroniza comparador → localStorage
   useEffect(() => {
     localStorage.setItem('comparador', JSON.stringify(comparador))
   }, [comparador])
 
-  // REQUISITO 12 — sincroniza modo oscuro → localStorage y clase en body
   useEffect(() => {
     localStorage.setItem('modoOscuro', String(modoOscuro))
     document.body.classList.toggle('oscuro', modoOscuro)
   }, [modoOscuro])
 
-  // REQUISITO 2 — lifting state up: funciones del carrito en el componente raíz
-  const agregarAlCarrito = producto => {
-    setCarrito(prev => [...prev, producto])
-  }
+  const agregarAlCarrito = producto => setCarrito(prev => [...prev, producto])
 
-  const eliminarDelCarrito = index => {
-    setCarrito(prev => prev.filter((_, i) => i !== index))
-  }
+  const eliminarDelCarrito = index => setCarrito(prev => prev.filter((_, i) => i !== index))
 
-  // Agrega o quita un producto del comparador (máximo 2)
   const toggleComparador = producto => {
     const yaEsta = comparador.some(p => p.id === producto.id)
     if (yaEsta) {
@@ -544,7 +505,6 @@ function App() {
 
   const cerrarComparador = () => setComparador([])
 
-  // REQUISITO 10 — reordenar para DnD: mueve el item de indexOrigen a indexDestino
   const reordenarCarrito = (indexOrigen, indexDestino) => {
     setCarrito(prev => {
       const nuevo = [...prev]
@@ -559,6 +519,9 @@ function App() {
     window.scrollTo(0, 0)
   }
 
+  // ← Mientras carga, solo muestra la pantalla de carga
+  if (cargando) return <LoadingScreen onFinish={() => setCargando(false)} />
+
   return (
     <div className={`app${modoOscuro ? ' oscuro' : ''}`}>
 
@@ -568,7 +531,6 @@ function App() {
           STRIDE<span className="logo-acento">PEAK</span>
         </button>
 
-        {/* REQUISITO 3 — onClick en enlaces de navegación */}
         <div className="navbar-links">
           {[
             ['inicio',   'INICIO'   ],
@@ -587,7 +549,6 @@ function App() {
         </div>
 
         <div className="navbar-acciones">
-          {/* REQUISITO 12 — toggle modo oscuro/claro guardado en localStorage */}
           <button
             onClick={() => setModoOscuro(m => !m)}
             className="navbar-tema"
@@ -625,7 +586,6 @@ function App() {
               </button>
             </div>
             <div className="hero-imagen">
-              {/* REQUISITO 8 — imagen */}
               <img
                 src="/images/jordan1.png"
                 alt="Jordan 1"
@@ -644,7 +604,6 @@ function App() {
           />
         )}
 
-        {/* REQUISITO 2 — props: carrito, onEliminar, onReordenar */}
         {paginaActiva === 'carrito' && (
           <Carrito
             carrito={carrito}
@@ -658,7 +617,6 @@ function App() {
 
       </main>
 
-      {/* Panel comparador: aparece automáticamente al seleccionar 2 productos */}
       <Comparador comparador={comparador} onCerrar={cerrarComparador} />
 
       <footer className="footer">
