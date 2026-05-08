@@ -709,6 +709,37 @@ body {
 .filtro-select:focus { border-bottom-color: #e53e3e; }
 
 /* ============================================================
+   CONVERSOR DE MONEDA — selector en el catálogo
+   ============================================================ */
+.filtro-moneda-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filtro-moneda {
+  border-bottom-color: #e53e3e;
+  color: #e53e3e;
+  font-weight: 900;
+  min-width: 90px;
+}
+
+.moneda-cargando {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.6rem;
+  color: #bbb;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.app.oscuro .filtro-moneda {
+  color: #e53e3e;
+  border-bottom-color: #e53e3e;
+}
+
+.app.oscuro .filtro-moneda option { background: #1e1e1e; }
+
+/* ============================================================
    CARRITO — Drag & Drop (REQUISITO 10)
    ============================================================ */
 

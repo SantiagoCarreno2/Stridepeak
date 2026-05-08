@@ -4,9 +4,21 @@ import LoadingScreen from './LoadingScreen'
 import './App.css'
 
 // ============================================================
+// UTILIDADES DE MONEDA
+// ============================================================
+function formatearPrecio(precioCOP, moneda, tasas) {
+  if (!tasas || moneda === 'COP') {
+    return `$${precioCOP.toLocaleString('es-CO')} COP`
+  }
+  const valor = (precioCOP / tasas.COP) * tasas[moneda]
+  if (moneda === 'EUR') return `€${valor.toFixed(2)} EUR`
+  return `$${valor.toFixed(2)} USD`
+}
+
+// ============================================================
 // COMPONENTE: TarjetaProducto
 // ============================================================
-function TarjetaProducto({ producto, onAgregar, comparador, onComparar }) {
+function TarjetaProducto({ producto, onAgregar, comparador, onComparar, moneda, tasas }) {
 
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null)
   const [agregado, setAgregado] = useState(false)
@@ -58,7 +70,7 @@ function TarjetaProducto({ producto, onAgregar, comparador, onComparar }) {
         </div>
 
         <p className="tarjeta-precio">
-          {`$${producto.precio.toLocaleString('es-CO')} COP`}
+          {formatearPrecio(producto.precio, moneda, tasas)}
         </p>
 
         <button
@@ -82,7 +94,7 @@ function TarjetaProducto({ producto, onAgregar, comparador, onComparar }) {
 // ============================================================
 // COMPONENTE: Catalogo
 // ============================================================
-function Catalogo({ onAgregar, comparador, onComparar }) {
+function Catalogo({ onAgregar, comparador, onComparar, moneda, setMoneda, tasas }) {
 
   const [busqueda, setBusqueda]   = useState('')
   const [categoria, setCategoria] = useState('todas')
@@ -139,6 +151,19 @@ function Catalogo({ onAgregar, comparador, onComparar }) {
           <option value="300a500">$300.000 – $500.000</option>
           <option value="mas500">MÁS DE $500.000</option>
         </select>
+
+        <div className="filtro-moneda-wrap">
+          <select
+            value={moneda}
+            onChange={e => setMoneda(e.target.value)}
+            className="filtro-select filtro-moneda"
+          >
+            <option value="COP">$ COP</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+          </select>
+          {!tasas && <span className="moneda-cargando">cargando tasas…</span>}
+        </div>
       </div>
 
       <p className="resultado-count">
@@ -153,6 +178,8 @@ function Catalogo({ onAgregar, comparador, onComparar }) {
             onAgregar={onAgregar}
             comparador={comparador}
             onComparar={onComparar}
+            moneda={moneda}
+            tasas={tasas}
           />
         ))}
       </div>
@@ -163,7 +190,7 @@ function Catalogo({ onAgregar, comparador, onComparar }) {
 // ============================================================
 // COMPONENTE: Carrito
 // ============================================================
-function Carrito({ carrito, onEliminar, onReordenar }) {
+function Carrito({ carrito, onEliminar, onReordenar, moneda, tasas }) {
 
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
@@ -234,7 +261,7 @@ function Carrito({ carrito, onEliminar, onReordenar }) {
               </div>
 
               <span className="carrito-item-precio">
-                ${item.precio.toLocaleString('es-CO')}
+                {formatearPrecio(item.precio, moneda, tasas)}
               </span>
 
               <button onClick={() => onEliminar(index)} className="btn-eliminar">
@@ -244,7 +271,7 @@ function Carrito({ carrito, onEliminar, onReordenar }) {
           ))}
 
           <div className="carrito-total">
-            {`TOTAL: $${total.toLocaleString('es-CO')} COP`}
+            {`TOTAL: ${formatearPrecio(total, moneda, tasas)}`}
           </div>
         </>
       )}
@@ -397,7 +424,7 @@ function Nosotros() {
 // ============================================================
 // COMPONENTE: Comparador
 // ============================================================
-function Comparador({ comparador, onCerrar }) {
+function Comparador({ comparador, onCerrar, moneda, tasas }) {
   if (comparador.length < 2) return null
 
   const [a, b] = comparador
@@ -416,7 +443,7 @@ function Comparador({ comparador, onCerrar }) {
     },
     { label: 'NOMBRE',    render: p => p.nombre },
     { label: 'MARCA',     render: p => <span className="comp-marca">{p.marca}</span> },
-    { label: 'PRECIO',    render: p => `$${p.precio.toLocaleString('es-CO')} COP` },
+    { label: 'PRECIO',    render: p => formatearPrecio(p.precio, moneda, tasas) },
     { label: 'CATEGORÍA', render: p => p.categoria },
     { label: 'TALLAS',    render: p => p.tallas.join(' · ') },
   ]
@@ -475,6 +502,12 @@ function App() {
     return guardado
   })
 
+  const [moneda, setMoneda] = useState(() => {
+    return localStorage.getItem('moneda') || 'COP'
+  })
+
+  const [tasas, setTasas] = useState(null)
+
   useEffect(() => {
     localStorage.setItem('carrito', JSON.stringify(carrito))
   }, [carrito])
@@ -487,6 +520,17 @@ function App() {
     localStorage.setItem('modoOscuro', String(modoOscuro))
     document.body.classList.toggle('oscuro', modoOscuro)
   }, [modoOscuro])
+
+  useEffect(() => {
+    localStorage.setItem('moneda', moneda)
+  }, [moneda])
+
+  useEffect(() => {
+    fetch('https://openexchangerates.org/api/latest.json?app_id=b2d28b219ab340a5ab6d81d22777cccb')
+      .then(r => r.json())
+      .then(data => setTasas(data.rates))
+      .catch(() => {})
+  }, [])
 
   const agregarAlCarrito = producto => setCarrito(prev => [...prev, producto])
 
@@ -601,6 +645,9 @@ function App() {
             onAgregar={agregarAlCarrito}
             comparador={comparador}
             onComparar={toggleComparador}
+            moneda={moneda}
+            setMoneda={setMoneda}
+            tasas={tasas}
           />
         )}
 
@@ -609,6 +656,8 @@ function App() {
             carrito={carrito}
             onEliminar={eliminarDelCarrito}
             onReordenar={reordenarCarrito}
+            moneda={moneda}
+            tasas={tasas}
           />
         )}
 
@@ -617,7 +666,12 @@ function App() {
 
       </main>
 
-      <Comparador comparador={comparador} onCerrar={cerrarComparador} />
+      <Comparador
+        comparador={comparador}
+        onCerrar={cerrarComparador}
+        moneda={moneda}
+        tasas={tasas}
+      />
 
       <footer className="footer">
         <span className="footer-logo">STRIDEPEAK</span>
