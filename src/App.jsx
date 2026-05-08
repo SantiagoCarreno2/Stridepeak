@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import productosData from './data/productos'
 import LoadingScreen from './LoadingScreen'
+import SneakerViewer from './SneakerViewer'
 import './App.css'
 
 // ============================================================
@@ -598,11 +599,11 @@ function App() {
             className="navbar-tema"
             title={modoOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
           >
-            {modoOscuro ? '◐ CLARO' : '◑ OSCURO'}
+            {modoOscuro ? '◐' : '◑'}
           </button>
 
           <button onClick={() => navegar('carrito')} className="navbar-carrito">
-            Carrito
+            CARRITO
             {carrito.length > 0 && (
               <span className="carrito-badge">{carrito.length}</span>
             )}
@@ -614,12 +615,15 @@ function App() {
 
         {paginaActiva === 'inicio' && (
           <section className="hero">
+            <div className="hero-modelo">
+              <SneakerViewer />
+            </div>
             <div className="hero-texto">
               <p className="hero-eyebrow">NUEVA COLECCIÓN 2025</p>
               <h1 className="hero-titulo">
-                EL SNEAKER<br />
-                <span className="hero-titulo-rojo">PERFECTO</span><br />
-                TE ESPERA
+                El sneaker<br />
+                perfecto<br />
+                te espera
               </h1>
               <p className="hero-desc">
                 Sneakers originales de las marcas que definen la cultura.
@@ -628,14 +632,9 @@ function App() {
               <button onClick={() => navegar('catalogo')} className="hero-btn">
                 VER CATÁLOGO
               </button>
-            </div>
-            <div className="hero-imagen">
-              <img
-                src="/images/jordan1.png"
-                alt="Jordan 1"
-                className="hero-img"
-                onError={e => { e.target.style.display = 'none' }}
-              />
+              <p className="hero-mini-stats">
+                6 MODELOS&nbsp;&nbsp;|&nbsp;&nbsp;100% ORIGINAL&nbsp;&nbsp;|&nbsp;&nbsp;BOGOTÁ, CO
+              </p>
             </div>
           </section>
         )}
