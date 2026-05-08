@@ -59,6 +59,36 @@ const productos = [
     descripcion: "La versión premium del clásico más vendido de la historia.",
     categoria: "Lifestyle",
   },
+  {
+    id: 7,
+    nombre: "Guayos Predator",
+    marca: "ADIDAS",
+    precio: 200000,
+    tallas: [38, 39, 40, 41, 42, 43, 44],
+    imagen: "/images/predator.png",
+    descripcion: "El calzado de fútbol que combina estilo y talento.",
+    categoria: "Fútbol",
+  },
+  {
+    id: 8,
+    nombre: "LV Skate",
+    marca: "LOUIS VUITTON",
+    precio: 1200000,
+    tallas: [38, 39, 40, 41, 42, 43],
+    imagen: "/images/LVskate.png",
+    descripcion: "El lujo se encuentra con la cultura urbana en esta colaboración exclusiva.",
+    categoria: "Lifestyle",
+  },
+  {
+    id: 9,
+    nombre: "Guayos F50",
+    marca: "ADIDAS",
+    precio: 150000,
+    tallas: [38, 39, 40, 41, 42, 43, 44],
+    imagen: "/images/f50.png",
+    descripcion: "El calzado de fútbol que combina estilo y talento.",
+    categoria: "Fútbol",
+  }
 ]
 
 export default productos
